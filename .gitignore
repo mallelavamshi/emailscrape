@@ -1,0 +1,13 @@
+# .gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+outputs/
+*.xlsx
+*.xls
+.env
+.DS_Store
