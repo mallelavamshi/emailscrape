@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  email-scraper:
+    container_name: email-scraper
+    build: .
+    ports:
+      - "8000:8000"  # FastAPI port
+    volumes:
+      - ./uploaded_files:/app/uploaded_files
+      - ./outputs:/app/outputs
+      - ./jobs:/app/jobs
+      - ./logs:/app/logs
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
