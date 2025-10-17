@@ -17,13 +17,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration - Update with your React app domain
+# CORS Configuration - Updated with Lovable domain and server IP
 origins = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "https://preview--emailscrape.lovable.app",
+    "https://emailscrape.lovable.app",
+    "http://178.16.141.15",
     "http://178.16.141.15:3000",
     "http://178.16.141.15:5173",
-    "https://yourdomain.com",  # Add your production domain
+    # Add your custom domain when you connect it
+    # "https://yourdomain.com",
 ]
 
 app.add_middleware(

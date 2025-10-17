@@ -4,9 +4,10 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'email-scraper'
         DOCKER_TAG = "${BUILD_NUMBER}"
-        GITHUB_REPO = 'mallelavamshi/fbemail'
+        GITHUB_REPO = 'mallelavamshi/emailscrape'
         CONTAINER_NAME = 'email-scraper'
         API_PORT = '8000'
+        SERVER_IP = '178.16.141.15'
     }
     
     stages {
@@ -30,7 +31,17 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    sh 'echo "Tests would run here"'
+                    sh 'echo "Running tests..."'
+                    sh 'docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} python -c "import fastapi; print(fastapi.__version__)"'
+                }
+            }
+        }
+        
+        stage('Stop Old Container') {
+            steps {
+                script {
+                    sh 'docker-compose down || true'
+                    sh 'docker rm -f ${CONTAINER_NAME} || true'
                 }
             }
         }
@@ -39,8 +50,8 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        docker-compose down || true
                         docker-compose up -d
+                        sleep 5
                     '''
                 }
             }
@@ -50,9 +61,17 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        echo "Waiting for API to start..."
                         sleep 15
+                        
+                        echo "Checking container status..."
                         docker ps | grep ${CONTAINER_NAME}
-                        curl -f http://localhost:${API_PORT}/health || echo "API is starting..."
+                        
+                        echo "Testing API health endpoint..."
+                        curl -f http://localhost:${API_PORT}/health || echo "API is still starting..."
+                        
+                        echo "Testing main endpoint..."
+                        curl -f http://localhost:${API_PORT}/ || echo "Main endpoint check..."
                     '''
                 }
             }
@@ -62,12 +81,26 @@ pipeline {
     post {
         success {
             echo '✅ Deployment successful!'
-            echo "API is running at http://178.16.141.15:${API_PORT}"
-            echo "API Docs: http://178.16.141.15:${API_PORT}/docs"
+            echo "========================================"
+            echo "API is running at:"
+            echo "  - Internal: http://localhost:${API_PORT}"
+            echo "  - External: http://${SERVER_IP}:${API_PORT}"
+            echo "  - API Docs: http://${SERVER_IP}:${API_PORT}/docs"
+            echo "  - Health: http://${SERVER_IP}:${API_PORT}/health"
+            echo "========================================"
         }
         failure {
             echo '❌ Deployment failed!'
-            sh 'docker-compose logs || true'
+            sh '''
+                echo "Container logs:"
+                docker-compose logs --tail=50 || true
+                
+                echo "Container status:"
+                docker ps -a | grep ${CONTAINER_NAME} || true
+            '''
+        }
+        always {
+            sh 'docker image prune -f || true'
         }
     }
 }

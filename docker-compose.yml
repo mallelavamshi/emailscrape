@@ -14,3 +14,11 @@ services:
     restart: unless-stopped
     environment:
       - PYTHONUNBUFFERED=1
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+    networks:
+      - email-scraper-network
+
+networks:
+  email-scraper-network:
+    driver: bridge
